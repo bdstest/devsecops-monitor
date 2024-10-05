@@ -1,0 +1,242 @@
+<!--
+  Custom DevSecOps Security Rules
+  Enterprise-specific security detection rules
+-->
+
+<group name="devsecops,">
+
+  <!-- DevSecOps CI/CD Security Rules -->
+  <rule id="120001" level="7">
+    <if_sid>1002</if_sid>
+    <match>failed security scan</match>
+    <description>Security scan failure in CI/CD pipeline</description>
+    <group>cicd,security_scan,</group>
+  </rule>
+
+  <rule id="120002" level="9">
+    <if_sid>1002</if_sid>
+    <match>critical vulnerability detected</match>
+    <description>Critical vulnerability detected in CI/CD pipeline</description>
+    <group>cicd,vulnerability,critical,</group>
+  </rule>
+
+  <rule id="120003" level="5">
+    <if_sid>1002</if_sid>
+    <match>dependency scan warning</match>
+    <description>Dependency security warning in CI/CD pipeline</description>
+    <group>cicd,dependency,warning,</group>
+  </rule>
+
+  <!-- Container Security Rules -->
+  <rule id="120010" level="8">
+    <if_sid>1002</if_sid>
+    <match>privileged container started</match>
+    <description>Privileged container started - potential security risk</description>
+    <group>container,privilege_escalation,</group>
+  </rule>
+
+  <rule id="120011" level="6">
+    <if_sid>1002</if_sid>
+    <match>container escape attempt</match>
+    <description>Container escape attempt detected</description>
+    <group>container,escape,</group>
+  </rule>
+
+  <rule id="120012" level="7">
+    <if_sid>1002</if_sid>
+    <match>suspicious container network activity</match>
+    <description>Suspicious network activity from container</description>
+    <group>container,network,suspicious,</group>
+  </rule>
+
+  <!-- Infrastructure Security Rules -->
+  <rule id="120020" level="9">
+    <if_sid>1002</if_sid>
+    <match>unauthorized infrastructure change</match>
+    <description>Unauthorized infrastructure configuration change</description>
+    <group>infrastructure,unauthorized_change,</group>
+  </rule>
+
+  <rule id="120021" level="7">
+    <if_sid>1002</if_sid>
+    <match>terraform|ansible|cloudformation</match>
+    <regex>ERROR|FAILED|UNAUTHORIZED</regex>
+    <description>Infrastructure as Code deployment failure or unauthorized access</description>
+    <group>iac,deployment,error,</group>
+  </rule>
+
+  <rule id="120022" level="8">
+    <if_sid>1002</if_sid>
+    <match>cloud resource misconfiguration</match>
+    <description>Cloud resource security misconfiguration detected</description>
+    <group>cloud,misconfiguration,</group>
+  </rule>
+
+  <!-- Application Security Rules -->
+  <rule id="120030" level="8">
+    <if_sid>1002</if_sid>
+    <match>SQL injection attempt</match>
+    <description>SQL injection attack attempt detected</description>
+    <group>web_attack,sql_injection,</group>
+  </rule>
+
+  <rule id="120031" level="7">
+    <if_sid>1002</if_sid>
+    <match>XSS attack attempt</match>
+    <description>Cross-site scripting (XSS) attack attempt</description>
+    <group>web_attack,xss,</group>
+  </rule>
+
+  <rule id="120032" level="9">
+    <if_sid>1002</if_sid>
+    <match>command injection</match>
+    <description>Command injection attack detected</description>
+    <group>web_attack,command_injection,</group>
+  </rule>
+
+  <!-- Authentication and Access Rules -->
+  <rule id="120040" level="7">
+    <if_sid>1002</if_sid>
+    <match>multiple failed API authentication</match>
+    <description>Multiple failed API authentication attempts</description>
+    <group>authentication,api,brute_force,</group>
+  </rule>
+
+  <rule id="120041" level="8">
+    <if_sid>1002</if_sid>
+    <match>privilege escalation attempt</match>
+    <description>Privilege escalation attempt detected</description>
+    <group>privilege_escalation,</group>
+  </rule>
+
+  <rule id="120042" level="6">
+    <if_sid>1002</if_sid>
+    <match>suspicious admin activity</match>
+    <description>Suspicious administrative activity detected</description>
+    <group>admin,suspicious,</group>
+  </rule>
+
+  <!-- Data Security Rules -->
+  <rule id="120050" level="9">
+    <if_sid>1002</if_sid>
+    <match>sensitive data exposure</match>
+    <description>Potential sensitive data exposure detected</description>
+    <group>data_loss,sensitive_data,</group>
+  </rule>
+
+  <rule id="120051" level="8">
+    <if_sid>1002</if_sid>
+    <match>large data transfer|bulk download</match>
+    <description>Large data transfer or bulk download detected</description>
+    <group>data_exfiltration,</group>
+  </rule>
+
+  <rule id="120052" level="7">
+    <if_sid>1002</if_sid>
+    <match>unauthorized database access</match>
+    <description>Unauthorized database access attempt</description>
+    <group>database,unauthorized_access,</group>
+  </rule>
+
+  <!-- Network Security Rules -->
+  <rule id="120060" level="8">
+    <if_sid>1002</if_sid>
+    <match>port scanning detected</match>
+    <description>Port scanning activity detected</description>
+    <group>network,port_scan,reconnaissance,</group>
+  </rule>
+
+  <rule id="120061" level="9">
+    <if_sid>1002</if_sid>
+    <match>C2 communication|command and control</match>
+    <description>Potential command and control communication</description>
+    <group>network,c2,malware,</group>
+  </rule>
+
+  <rule id="120062" level="7">
+    <if_sid>1002</if_sid>
+    <match>DNS tunneling</match>
+    <description>DNS tunneling activity detected</description>
+    <group>network,dns_tunneling,exfiltration,</group>
+  </rule>
+
+  <!-- Malware and Threat Rules -->
+  <rule id="120070" level="10">
+    <if_sid>1002</if_sid>
+    <match>malware detected|virus found</match>
+    <description>Malware or virus detected on system</description>
+    <group>malware,virus,</group>
+  </rule>
+
+  <rule id="120071" level="9">
+    <if_sid>1002</if_sid>
+    <match>ransomware|crypto-locker</match>
+    <description>Potential ransomware activity detected</description>
+    <group>ransomware,malware,</group>
+  </rule>
+
+  <rule id="120072" level="8">
+    <if_sid>1002</if_sid>
+    <match>suspicious file execution</match>
+    <description>Suspicious file execution detected</description>
+    <group>malware,suspicious_execution,</group>
+  </rule>
+
+  <!-- Compliance Monitoring Rules -->
+  <rule id="120080" level="5">
+    <if_sid>1002</if_sid>
+    <match>GDPR|PCI DSS|HIPAA|SOX</match>
+    <regex>violation|non-compliance|audit failure</regex>
+    <description>Compliance violation detected</description>
+    <group>compliance,violation,</group>
+  </rule>
+
+  <rule id="120081" level="7">
+    <if_sid>1002</if_sid>
+    <match>audit log deletion|log tampering</match>
+    <description>Audit log deletion or tampering detected</description>
+    <group>compliance,log_tampering,</group>
+  </rule>
+
+  <!-- DevOps Security Rules -->
+  <rule id="120090" level="6">
+    <if_sid>1002</if_sid>
+    <match>secrets exposed|API key leaked</match>
+    <description>Secrets or API keys exposed in code or logs</description>
+    <group>secrets,exposure,devops,</group>
+  </rule>
+
+  <rule id="120091" level="7">
+    <if_sid>1002</if_sid>
+    <match>unauthorized deployment</match>
+    <description>Unauthorized application deployment detected</description>
+    <group>deployment,unauthorized,devops,</group>
+  </rule>
+
+  <rule id="120092" level="5">
+    <if_sid>1002</if_sid>
+    <match>configuration drift</match>
+    <description>Configuration drift detected in infrastructure</description>
+    <group>configuration,drift,devops,</group>
+  </rule>
+
+  <!-- Custom frequency-based rules -->
+  <rule id="120100" level="8" frequency="5" timeframe="300">
+    <if_matched_sid>120040</if_matched_sid>
+    <description>Multiple API authentication failures - possible brute force attack</description>
+    <group>authentication,brute_force,</group>
+  </rule>
+
+  <rule id="120101" level="9" frequency="3" timeframe="180">
+    <if_matched_sid>120030</if_matched_sid>
+    <description>Multiple SQL injection attempts from same source</description>
+    <group>web_attack,sql_injection,repeated,</group>
+  </rule>
+
+  <rule id="120102" level="10" frequency="2" timeframe="120">
+    <if_matched_sid>120070</if_matched_sid>
+    <description>Multiple malware detections - potential outbreak</description>
+    <group>malware,outbreak,</group>
+  </rule>
+
+</group>

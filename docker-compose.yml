@@ -1,0 +1,333 @@
+version: '3.8'
+
+services:
+  # Elasticsearch cluster for SIEM data storage
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: devsecops-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - cluster.name=devsecops-cluster
+      - node.name=devsecops-node-1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./elk/elasticsearch/config:/usr/share/elasticsearch/config
+    networks:
+      - devsecops
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kibana for SIEM dashboards and analysis
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: devsecops-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=devsecops-kibana
+      - SERVER_HOST=0.0.0.0
+      - KIBANA_USERNAME=demouser
+      - KIBANA_PASSWORD=demopass123
+    ports:
+      - "5602:5601"
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+      - ./elk/kibana/config:/usr/share/kibana/config
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - devsecops
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Logstash for log processing and enrichment
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: devsecops-logstash
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+      - XPACK_MONITORING_ENABLED=false
+    volumes:
+      - ./elk/logstash/config:/usr/share/logstash/config
+      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./sample-data/logs:/var/log/sample
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - devsecops
+
+  # Wazuh Manager (SIEM core)
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.6.0
+    container_name: devsecops-wazuh-manager
+    environment:
+      - WAZUH_MANAGER_ADMIN_USER=demouser
+      - WAZUH_MANAGER_ADMIN_PASSWORD=demopass123
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "514:514/udp"
+      - "55000:55000"
+    volumes:
+      - wazuh_config:/var/ossec/etc
+      - wazuh_logs:/var/ossec/logs
+      - wazuh_queue:/var/ossec/queue
+      - wazuh_rules:/var/ossec/ruleset
+      - ./wazuh/config:/wazuh-config-mount
+      - ./wazuh/rules:/var/ossec/etc/rules
+      - ./sample-data/logs:/var/log/sample
+    networks:
+      - devsecops
+    healthcheck:
+      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Wazuh Dashboard
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.6.0
+    container_name: devsecops-wazuh-dashboard
+    environment:
+      - WAZUH_API_URL=https://wazuh-manager:55000
+      - DASHBOARD_USERNAME=demouser
+      - DASHBOARD_PASSWORD=demopass123
+    ports:
+      - "5601:5601"
+    volumes:
+      - wazuh_dashboard_config:/usr/share/wazuh-dashboard/config
+    depends_on:
+      wazuh-manager:
+        condition: service_healthy
+    networks:
+      - devsecops
+
+  # Suricata IDS/IPS
+  suricata:
+    image: jasonish/suricata:7.0.2
+    container_name: devsecops-suricata
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    volumes:
+      - ./suricata/config:/etc/suricata
+      - ./suricata/rules:/var/lib/suricata/rules
+      - suricata_logs:/var/log/suricata
+      - ./sample-data/network:/var/log/sample-network
+    command: suricata -c /etc/suricata/suricata.yaml -i any --init-errors-fatal
+    depends_on:
+      - wazuh-manager
+
+  # Grafana for security metrics dashboards
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: devsecops-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=demouser
+      - GF_SECURITY_ADMIN_PASSWORD=demopass123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel,grafana-worldmap-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - devsecops
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: devsecops-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alerts:/etc/prometheus/alerts
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - devsecops
+
+  # PostgreSQL for configuration and metadata
+  postgres:
+    image: postgres:16.0
+    container_name: devsecops-postgres
+    environment:
+      POSTGRES_DB: devsecops
+      POSTGRES_USER: demouser
+      POSTGRES_PASSWORD: demopass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - devsecops
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demouser -d devsecops"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7.2.0-alpine
+    container_name: devsecops-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - devsecops
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Incident Response API
+  incident-api:
+    build:
+      context: ./incident-response
+      dockerfile: Dockerfile
+    container_name: devsecops-incident-api
+    environment:
+      - DATABASE_URL=postgresql://demouser:demopass123@postgres:5432/devsecops
+      - REDIS_URL=redis://redis:6379/0
+      - WAZUH_API_URL=https://wazuh-manager:55000
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - API_KEY=demo-key-sec-incident123
+      - SECRET_KEY=demo-secret-devsecops-2024
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./incident-response/playbooks:/app/playbooks
+      - ./sample-data:/app/sample-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      wazuh-manager:
+        condition: service_healthy
+    networks:
+      - devsecops
+
+  # Threat Intelligence Feed Processor
+  threat-intel:
+    build:
+      context: ./threat-intel
+      dockerfile: Dockerfile
+    container_name: devsecops-threat-intel
+    environment:
+      - DATABASE_URL=postgresql://demouser:demopass123@postgres:5432/devsecops
+      - REDIS_URL=redis://redis:6379/1
+      - MISP_URL=http://localhost:8080
+      - MISP_API_KEY=demo-key-sec-misp123
+    volumes:
+      - ./threat-intel/feeds:/app/feeds
+      - ./sample-data/intel:/app/sample-intel
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - devsecops
+
+  # Nginx reverse proxy and load balancer
+  nginx:
+    image: nginx:1.24.0-alpine
+    container_name: devsecops-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/auth:/etc/nginx/auth
+    depends_on:
+      - grafana
+      - kibana
+      - wazuh-dashboard
+      - incident-api
+    networks:
+      - devsecops
+
+  # Sample data generator for demo
+  data-generator:
+    build:
+      context: ./sample-data
+      dockerfile: Dockerfile
+    container_name: devsecops-data-generator
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - WAZUH_MANAGER_URL=http://wazuh-manager:55000
+      - GENERATION_RATE=10
+    volumes:
+      - ./sample-data:/app/data
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      wazuh-manager:
+        condition: service_healthy
+    networks:
+      - devsecops
+    restart: "no"
+
+networks:
+  devsecops:
+    driver: bridge
+
+volumes:
+  elasticsearch_data:
+    driver: local
+  kibana_data:
+    driver: local
+  wazuh_config:
+    driver: local
+  wazuh_logs:
+    driver: local
+  wazuh_queue:
+    driver: local
+  wazuh_rules:
+    driver: local
+  wazuh_dashboard_config:
+    driver: local
+  suricata_logs:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
