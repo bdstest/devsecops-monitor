@@ -7,12 +7,12 @@
 
 Enterprise-grade security monitoring and incident response platform designed for continuous security operations. Integrates Wazuh SIEM, Suricata IDS, ELK Stack, and Grafana to provide comprehensive security visibility across development and production environments.
 
-**Resume Claims Validated:**
-- ✅ Enterprise security monitoring with real-time threat detection
-- ✅ Automated incident response reducing MTTR by 40%
-- ✅ Compliance automation for SOC 2, GDPR, and HIPAA
-- ✅ DevSecOps integration with CI/CD security gates
-- ✅ Threat intelligence correlation and analysis
+**Platform Capabilities:**
+- Enterprise security monitoring with real-time threat detection
+- Automated incident response reducing MTTR by 40%
+- Compliance automation for SOC 2, GDPR, and HIPAA
+- DevSecOps integration with CI/CD security gates
+- Threat intelligence correlation and analysis
 
 ## 🎯 Business Impact
 
