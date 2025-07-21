@@ -215,9 +215,9 @@ class ContainerSecurityManager:
 class SASTIntegration:
     def __init__(self):
         self.tools = {
-            'sonarqube': SonarQubeAPI(),
-            'checkmarx': CheckmarxAPI(),
-            'semgrep': SemgrepScanner()
+            'semgrep': SemgrepScanner(),
+            'bandit': BanditScanner(),
+            'brakeman': BrakemanScanner()
         }
         
     def run_sast_analysis(self, codebase_path, language):
@@ -261,9 +261,9 @@ class SASTIntegration:
 # DAST automation configuration
 dast_configuration:
   tools:
-    - owasp_zap: "Web application security scanner"
-    - burp_suite: "Advanced web vulnerability scanner"
-    - netsparker: "Enterprise web application scanner"
+    - owasp_zap: "Open-source web application security scanner"
+    - nikto: "Open-source web server vulnerability scanner"
+    - arachni: "Open-source web application security scanner framework"
   
   scan_policies:
     development:

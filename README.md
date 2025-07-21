@@ -317,9 +317,9 @@ When threats are detected, the system can automatically isolate affected systems
 
 ### Threat Intelligence
 - **MISP** threat intelligence platform
-- **OpenCTI** cyber threat intelligence
-- **AlienVault OTX** community intelligence
-- **Commercial feeds** (FireEye, CrowdStrike, etc.)
+- **OpenCTI** cyber threat intelligence platform
+- **AlienVault OTX** community threat intelligence
+- **Abuse.ch** threat intelligence feeds (URLhaus, MalwareBazaar)
 
 ## 📚 Additional Resources
 

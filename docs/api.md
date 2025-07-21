@@ -154,7 +154,7 @@ GET /api/v1/threat-intel/indicators
       "value": "192.168.1.100",
       "confidence": 85,
       "threat_type": "malware_c2",
-      "source": "commercial_feed",
+      "source": "community_feed",
       "first_seen": "2024-07-20T08:00:00Z",
       "tags": ["apt29", "cobalt_strike"]
     }
@@ -372,9 +372,9 @@ POST /api/v1/webhooks/security-event
 ```
 
 ## Rate Limiting
-- **Standard Tier**: 1000 requests per hour
-- **Premium Tier**: 5000 requests per hour
-- **Enterprise Tier**: Unlimited
+- **Community**: 1000 requests per hour
+- **Standard**: 5000 requests per hour
+- **Enterprise**: Unlimited
 
 ## Error Responses
 ```json

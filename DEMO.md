@@ -270,10 +270,10 @@ The platform generates realistic security events:
 - Load-balanced incident response APIs
 
 ### Integration Points
-- **SIEM**: Splunk, QRadar, Sentinel
-- **Ticketing**: Jira, ServiceNow, PagerDuty
-- **Communications**: Slack, Teams, Email
-- **Threat Intel**: MISP, OpenCTI, Commercial feeds
+- **SIEM**: OpenSearch/ElasticSearch, Wazuh, Graylog
+- **Ticketing**: Jira, GitLab Issues, Redmine
+- **Communications**: Mattermost, RocketChat, Email
+- **Threat Intel**: MISP, OpenCTI, AlienVault OTX
 
 ### Compliance Frameworks
 - **SOC 2 Type II**: Continuous control monitoring
